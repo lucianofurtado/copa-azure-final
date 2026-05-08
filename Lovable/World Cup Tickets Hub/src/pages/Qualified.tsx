@@ -103,6 +103,18 @@ const qualifiedTeams: QualifiedTeam[] = [
   
   // CONCACAF
   { id: "cur", name: "Curaçau", code: "CUR", flag: "https://flagcdn.com/w80/cw.png", confederation: "CONCACAF", group: "E", ranking: 120, participations: 1, bestResult: "Estreante (2026)" },
+
+  // Europeias adicionais (Final Draw 2025-12-05)
+  { id: "cze", name: "Tchéquia", code: "CZE", flag: "https://flagcdn.com/w80/cz.png", confederation: "UEFA", group: "A", ranking: 38, participations: 9, bestResult: "Vice-campeão (1934, 1962 — pela Tchecoslováquia)" },
+  { id: "bih", name: "Bósnia e Herzegovina", code: "BIH", flag: "https://flagcdn.com/w80/ba.png", confederation: "UEFA", group: "B", ranking: 75, participations: 1, bestResult: "Fase de grupos (2014)" },
+  { id: "tur", name: "Turquia", code: "TUR", flag: "https://flagcdn.com/w80/tr.png", confederation: "UEFA", group: "D", ranking: 25, participations: 11, bestResult: "3º lugar (2002)" },
+  { id: "swe", name: "Suécia", code: "SWE", flag: "https://flagcdn.com/w80/se.png", confederation: "UEFA", group: "F", ranking: 21, participations: 13, bestResult: "Vice-campeão (1958)" },
+
+  // Asiática adicional (Final Draw 2025-12-05)
+  { id: "irq", name: "Iraque", code: "IRQ", flag: "https://flagcdn.com/w80/iq.png", confederation: "AFC", group: "I", ranking: 58, participations: 1, bestResult: "Estreante (2026)" },
+
+  // Africana adicional (Final Draw 2025-12-05)
+  { id: "cod", name: "Rep. Dem. do Congo", code: "COD", flag: "https://flagcdn.com/w80/cd.png", confederation: "CAF", group: "K", ranking: 65, participations: 1, bestResult: "Estreante (2026)" },
 ];
 
 const confederations = [

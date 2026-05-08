@@ -15,13 +15,13 @@ export const teams: Team[] = [
   { id: "mex", name: "México", code: "MEX", flag: "https://flagcdn.com/w80/mx.png", confederation: "CONCACAF", group: "A", isConfirmed: true },
   { id: "rsa", name: "África do Sul", code: "RSA", flag: "https://flagcdn.com/w80/za.png", confederation: "CAF", group: "A", isConfirmed: true },
   { id: "kor", name: "Coreia do Sul", code: "KOR", flag: "https://flagcdn.com/w80/kr.png", confederation: "AFC", group: "A", isConfirmed: true },
-  { id: "playoff-a", name: "A definir (Playoff)", code: "TBD", flag: "🏆", confederation: "UEFA", group: "A", isConfirmed: false, isTBD: true },
+  { id: "cze", name: "Tchéquia", code: "CZE", flag: "https://flagcdn.com/w80/cz.png", confederation: "UEFA", group: "A", isConfirmed: true },
   
   // Grupo B
   { id: "can", name: "Canadá", code: "CAN", flag: "https://flagcdn.com/w80/ca.png", confederation: "CONCACAF", group: "B", isConfirmed: true },
   { id: "qat", name: "Catar", code: "QAT", flag: "https://flagcdn.com/w80/qa.png", confederation: "AFC", group: "B", isConfirmed: true },
   { id: "sui", name: "Suíça", code: "SUI", flag: "https://flagcdn.com/w80/ch.png", confederation: "UEFA", group: "B", isConfirmed: true },
-  { id: "playoff-b", name: "A definir (Playoff)", code: "TBD", flag: "🏆", confederation: "UEFA", group: "B", isConfirmed: false, isTBD: true },
+  { id: "bih", name: "Bósnia e Herzegovina", code: "BIH", flag: "https://flagcdn.com/w80/ba.png", confederation: "UEFA", group: "B", isConfirmed: true },
   
   // Grupo C
   { id: "bra", name: "Brasil", code: "BRA", flag: "https://flagcdn.com/w80/br.png", confederation: "CONMEBOL", group: "C", isConfirmed: true },
@@ -33,7 +33,7 @@ export const teams: Team[] = [
   { id: "usa", name: "Estados Unidos", code: "USA", flag: "https://flagcdn.com/w80/us.png", confederation: "CONCACAF", group: "D", isConfirmed: true },
   { id: "par", name: "Paraguai", code: "PAR", flag: "https://flagcdn.com/w80/py.png", confederation: "CONMEBOL", group: "D", isConfirmed: true },
   { id: "aus", name: "Austrália", code: "AUS", flag: "https://flagcdn.com/w80/au.png", confederation: "AFC", group: "D", isConfirmed: true },
-  { id: "playoff-d", name: "A definir (Playoff)", code: "TBD", flag: "🏆", confederation: "UEFA", group: "D", isConfirmed: false, isTBD: true },
+  { id: "tur", name: "Turquia", code: "TUR", flag: "https://flagcdn.com/w80/tr.png", confederation: "UEFA", group: "D", isConfirmed: true },
   
   // Grupo E
   { id: "ger", name: "Alemanha", code: "GER", flag: "https://flagcdn.com/w80/de.png", confederation: "UEFA", group: "E", isConfirmed: true },
@@ -45,7 +45,7 @@ export const teams: Team[] = [
   { id: "ned", name: "Holanda", code: "NED", flag: "https://flagcdn.com/w80/nl.png", confederation: "UEFA", group: "F", isConfirmed: true },
   { id: "jpn", name: "Japão", code: "JPN", flag: "https://flagcdn.com/w80/jp.png", confederation: "AFC", group: "F", isConfirmed: true },
   { id: "tun", name: "Tunísia", code: "TUN", flag: "https://flagcdn.com/w80/tn.png", confederation: "CAF", group: "F", isConfirmed: true },
-  { id: "playoff-f", name: "A definir (Playoff)", code: "TBD", flag: "🏆", confederation: "UEFA", group: "F", isConfirmed: false, isTBD: true },
+  { id: "swe", name: "Suécia", code: "SWE", flag: "https://flagcdn.com/w80/se.png", confederation: "UEFA", group: "F", isConfirmed: true },
   
   // Grupo G
   { id: "bel", name: "Bélgica", code: "BEL", flag: "https://flagcdn.com/w80/be.png", confederation: "UEFA", group: "G", isConfirmed: true },
@@ -63,7 +63,7 @@ export const teams: Team[] = [
   { id: "fra", name: "França", code: "FRA", flag: "https://flagcdn.com/w80/fr.png", confederation: "UEFA", group: "I", isConfirmed: true },
   { id: "sen", name: "Senegal", code: "SEN", flag: "https://flagcdn.com/w80/sn.png", confederation: "CAF", group: "I", isConfirmed: true },
   { id: "nor", name: "Noruega", code: "NOR", flag: "https://flagcdn.com/w80/no.png", confederation: "UEFA", group: "I", isConfirmed: true },
-  { id: "playoff-i", name: "A definir (Playoff)", code: "TBD", flag: "🏆", confederation: "CONMEBOL", group: "I", isConfirmed: false, isTBD: true },
+  { id: "irq", name: "Iraque", code: "IRQ", flag: "https://flagcdn.com/w80/iq.png", confederation: "AFC", group: "I", isConfirmed: true },
   
   // Grupo J
   { id: "arg", name: "Argentina", code: "ARG", flag: "https://flagcdn.com/w80/ar.png", confederation: "CONMEBOL", group: "J", isConfirmed: true },
@@ -75,7 +75,7 @@ export const teams: Team[] = [
   { id: "por", name: "Portugal", code: "POR", flag: "https://flagcdn.com/w80/pt.png", confederation: "UEFA", group: "K", isConfirmed: true },
   { id: "uzb", name: "Uzbequistão", code: "UZB", flag: "https://flagcdn.com/w80/uz.png", confederation: "AFC", group: "K", isConfirmed: true },
   { id: "col", name: "Colômbia", code: "COL", flag: "https://flagcdn.com/w80/co.png", confederation: "CONMEBOL", group: "K", isConfirmed: true },
-  { id: "playoff-k", name: "A definir (Playoff)", code: "TBD", flag: "🏆", confederation: "CAF", group: "K", isConfirmed: false, isTBD: true },
+  { id: "cod", name: "Rep. Dem. do Congo", code: "COD", flag: "https://flagcdn.com/w80/cd.png", confederation: "CAF", group: "K", isConfirmed: true },
   
   // Grupo L
   { id: "eng", name: "Inglaterra", code: "ENG", flag: "https://flagcdn.com/w80/gb-eng.png", confederation: "UEFA", group: "L", isConfirmed: true },
