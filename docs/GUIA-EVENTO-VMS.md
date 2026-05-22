@@ -404,6 +404,16 @@ Ainda no navegador da `vm-back`:
 2. **iisnode** (versão **Full**): [github.com/Azure/iisnode/releases](https://github.com/Azure/iisnode/releases) → baixe `iisnode-full-v0.2.26-x64.msi` → instale
 3. **URL Rewrite Module**: [iis.net/downloads/microsoft/url-rewrite](https://www.iis.net/downloads/microsoft/url-rewrite) → instale
 
+**Depois de instalar, destrave as seções `handlers` e `modules`** no nível do servidor. Sem isso, o `web.config` da API (que registra o handler do iisnode) é rejeitado com **HTTP 500.19** (`0x80070021` — _"section is locked at a parent level"_). PowerShell **como Administrador**:
+
+```powershell
+& "$env:windir\system32\inetsrv\appcmd.exe" unlock config -section:system.webServer/handlers
+& "$env:windir\system32\inetsrv\appcmd.exe" unlock config -section:system.webServer/modules
+iisreset
+```
+
+> 💡 **Por quê?** Por padrão o IIS não delega a edição dessas seções para o `web.config` de uma aplicação. Como o `web.config` da API precisa adicionar o handler `iisnode`, a delegação tem que estar liberada (equivale a **IIS Manager → nó do servidor → Feature Delegation → `Handler Mappings` e `Modules` → Read/Write**).
+
 #### 4.4 Baixar a aplicação (já compilada)
 
 Baixe o ZIP **pronto** do backend direto na `vm-back`:
@@ -416,26 +426,32 @@ Extraia para `C:\inetpub\wwwroot\` — vai aparecer a pasta `fifa2026-api/` já 
 
 #### 4.5 Configurar `.env` da API
 
-Em `C:\inetpub\wwwroot\fifa2026-api\` crie um arquivo `.env` (use Bloco de Notas → Salvar como, marque "All files" para não virar `.env.txt`):
+> ⚠️ **O arquivo precisa se chamar EXATAMENTE `.env`** — não `.env.txt`, não `fifaapi.env`. O dotenv só lê `.env`; com qualquer outro nome a API sobe mas falha ao consultar o banco (`config.server undefined`). O Bloco de Notas erra isso com frequência, então **crie via PowerShell** (nome e encoding garantidos). Troque `<IP_DB>`, a senha e o `JWT_SECRET` pelos seus valores e cole na `vm-back`:
 
-```env
-# Cenário VM
-DB_SERVER=<IP_DB>
-DB_PORT=1433
-DB_USER=fifa2026_db
-DB_PASSWORD=F1f@2026App!
-DB_NAME=FIFA2026Tickets
-
-PORT=3001
-HOST=0.0.0.0
-
-JWT_SECRET=<string longa aleatória>
-JWT_EXPIRES_IN=7d
-
-FRONTEND_URL=http://<IP_FRONT>
+```powershell
+cd C:\inetpub\wwwroot\fifa2026-api
+'DB_SERVER=<IP_DB>'        | Set-Content .env -Encoding ascii
+'DB_PORT=1433'             | Add-Content .env
+'DB_USER=fifa2026_db'      | Add-Content .env
+'DB_PASSWORD=F1f@2026App!' | Add-Content .env
+'DB_NAME=FIFA2026Tickets'  | Add-Content .env
+'PORT=3001'                | Add-Content .env
+'HOST=0.0.0.0'             | Add-Content .env
+'JWT_SECRET=troque-por-uma-string-longa-aleatoria' | Add-Content .env
+'JWT_EXPIRES_IN=7d'        | Add-Content .env
+'FRONTEND_URL=*'           | Add-Content .env
 ```
 
-Substitua `<IP_DB>` (anotado na Fase 2), `<IP_FRONT>` (Public IP da vm-front, também anotado), e gere um `JWT_SECRET` longo (qualquer string aleatória de 32+ chars).
+- `<IP_DB>` = IP privado da vm-db (anotado na Fase 2).
+- `DB_USER`/`DB_PASSWORD` = **exatamente** o login criado na Fase 3.6 (`fifa2026_db` + a senha que você definiu).
+- `FRONTEND_URL=*` libera o CORS — no proxy reverso o CORS nem é exercitado; pode trocar pelo IP do front depois.
+
+**Confirme** o nome e o conteúdo (deve listar `.env`, não `.env.txt`):
+
+```powershell
+Get-ChildItem .env | Select-Object Name, Length
+Get-Content .env | Select-String '^DB_(SERVER|USER|NAME)='
+```
 
 > 💡 **Por que `HOST=0.0.0.0`?** Sem isso, Node escuta só em `localhost`, e a vm-front não consegue alcançar pelo IP privado. Com `0.0.0.0` aceita conexões de toda a VNet.
 
@@ -607,11 +623,13 @@ try {
 
 | Sintoma | Causa provável | O que fazer |
 |---|---|---|
+| Backend dá **HTTP 500.19** (`0x80070021`, _"section locked at a parent level"_) | Seções `handlers`/`modules` travadas no IIS (delegação negada) | Rode o `appcmd unlock` da **Fase 4.3** + `iisreset` (ou IIS Manager → nó do servidor → Feature Delegation → `Handler Mappings`/`Modules` → Read/Write) |
 | Front abre, mas `/api/*` retorna 502 | ARR proxy não habilitado | IIS Manager → ARR → Server Proxy Settings → ✅ **Enable proxy** |
 | Front abre, mas `/api/*` retorna 404 | URL Rewrite não instalado, ou `__BACKEND_URL__` não substituído | Reinstale URL Rewrite; confirme que o `web.config` **não** contém mais `__BACKEND_URL__` (Fase 5.4) |
-| Backend retorna 500 Internal Server Error | `.env` errado, ou `node_modules` não veio no zip | Veja `C:\inetpub\wwwroot\fifa2026-api\iisnode\*.log`; confirme que existe a pasta `node_modules\` — se faltar, rebaixe e reextraia o `fifa2026-api.zip` |
-| Backend não conecta no SQL | TCP/IP do SQL Server desligado, ou firewall Windows bloqueando 1433 | Configuration Manager → habilite TCP/IP → restart serviço; rode o `New-NetFirewallRule` da Fase 3.4 |
-| Backend vê o SQL mas dá "Login failed" | Senha errada no `.env`, ou login `fifa2026_db` não existe | Rode o `CREATE LOGIN` da Fase 3.6; confirme `DB_USER`/`DB_PASSWORD` no `.env` |
+| Backend retorna 500 Internal Server Error | `.env` errado, ou `node_modules` não veio no zip | Veja `C:\inetpub\wwwroot\fifa2026-api\logs\*.log` (stderr do iisnode); confirme que existe a pasta `node_modules\` — se faltar, rebaixe e reextraia o `fifa2026-api.zip` |
+| `/api/health` OK mas `/api/matches` retorna `"Erro ao buscar jogos"` | **`.env` ausente ou mal nomeado** (`config.server undefined`), login inválido, ou bacpac stale | 1º confirme que existe `C:\inetpub\wwwroot\fifa2026-api\.env` (nome exato, não `.env.txt`/outro) com `DB_SERVER` — `iisreset` após criar; depois `Test-NetConnection <IP_DB> -Port 1433`; se conecta mas vier poucos jogos, reimporte o bacpac **atual** |
+| Backend não conecta no SQL (`ETIMEOUT`/`ESOCKET`) | TCP/IP do SQL desligado, firewall Windows bloqueando 1433, ou `DB_SERVER` errado | Configuration Manager → habilite TCP/IP → restart serviço; rode o `New-NetFirewallRule` da Fase 3.4; confirme `DB_SERVER` = IP privado da vm-db |
+| Backend vê o SQL mas dá "Login failed" (`ELOGIN`) | Senha errada no `.env`, ou login `fifa2026_db` não existe | Rode o `CREATE LOGIN` da Fase 3.6; confirme `DB_USER`/`DB_PASSWORD` no `.env` |
 | Browser não abre o IP público | NSG da `vm-front` não tem inbound 80; ou Windows Firewall dentro da VM bloqueando | Portal: NSG da `vm-front` → garanta inbound 80/443 da Internet; RDP na vm-front: `New-NetFirewallRule -DisplayName "HTTP" -Direction Inbound -Protocol TCP -LocalPort 80 -Action Allow` |
 | RDP na `vm-back` ou `vm-db` falha | NSG sem 3389 da subnet, ou você está tentando do seu IP em vez de via vm-front (jump host) | Confirme NSG; sempre conecte vm-front primeiro, depois vm-back/vm-db pelo IP privado |
 | Import do bacpac falha | Versão do SSMS antiga; ou arquivo corrompido na cópia RDP | Baixe SSMS mais recente; refaça a cópia do `.bacpac` |
