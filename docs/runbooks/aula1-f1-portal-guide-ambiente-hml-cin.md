@@ -433,6 +433,8 @@ A F1 é **assíncrona**: você faz um `POST` e recebe `202 Accepted` — mas o t
 
 ## Fase 12 — Checkpoint final (teste ponta a ponta)
 
+### 12.1 — Backend: compra **single** via curl
+
 Dispare uma compra válida (ajuste a URL para a SUA Function):
 
 ```bash
@@ -446,6 +448,41 @@ curl -sS "https://<seu-func>.azurewebsites.net/api/v2/purchase" \
 2. A mensagem **aparece e é consumida** na fila `tickets-purchase` (Service Bus → Queues → métricas; ou Live Metrics do App Insights).
 3. A tabela **`purchases`** recebe um registro novo com **`source='v2'`** e o `correlation_id` da resposta.
 4. Uma compra **inválida** (ex.: `matchId` inexistente) vai para a **DLQ** após as tentativas de entrega (max delivery count = 10), e a exceção aparece em **App Insights → Failures**.
+
+### 12.2 — Compra v2 **multi-item** (carrinho inteiro) — fan-out no Service Bus
+
+> Esta é a **melhoria visível** das Oitavas: o fluxo v2 processa o **carrinho inteiro** (N linhas), não só 1 ingresso. Um único `POST` vira **N mensagens** no Service Bus (**fan-out**) — cada linha gravada como uma compra com seu próprio `correlationId`, todas compartilhando o mesmo `orderId` (o protocolo do pedido).
+
+**Pré-requisito — deploy do frontend.** Rode o workflow com **`acao=frontend`** (ou `tudo`). Vars/secrets do frontend no fork: `FRONTEND_APP_NAME`, `BACKEND_URL`, `FUNCTION_V2_URL` (Variables) + `AZURE_FRONTEND_PUBLISH_PROFILE` (Secret).
+
+> ⚠️ **Mesma lição do basic-auth da Function (Fase 7.4) — agora no frontend.** Garanta o **SCM Basic Auth `On`** também no **App Service do frontend** (`<seu-frontend>`) e capture o publish profile `AZURE_FRONTEND_PUBLISH_PROFILE` **DEPOIS** de ligar o basic-auth. Se o profile foi pego com o basic-auth `Off`, o deploy falha com `##[error]Deployment Failed, Error: Publish profile is invalid for app-name and slot-name provided`. Correção: ligue o basic-auth, **recapture** o publish profile (Portal → App Service do front → `Get publish profile`, ou `az webapp deployment list-publishing-profiles -g <seu-rg> -n <seu-frontend> --xml`), atualize o secret e reode `acao=frontend`.
+
+**Teste via API (carrinho de 2 linhas):**
+
+```bash
+curl -sS "https://<seu-func>.azurewebsites.net/api/v2/purchase" \
+  -H "Content-Type: application/json" \
+  -d '{"userId":1,"items":[{"matchId":1,"category":"VIP","quantity":2},{"matchId":2,"category":"Cat1","quantity":1}]}'
+```
+
+✅ **Tudo certo se:**
+1. A resposta é **`202`** com **`orderId`**, **`status:"queued"`** e um array **`correlationIds`** com **2** GUIDs **distintos** (1 por linha). O campo singular `correlationId` vem **`null`** — ele só aparece quando o carrinho tem **1** linha (backward-compat do smoke).
+2. As **2 mensagens** aparecem e são consumidas na fila `tickets-purchase` (fan-out real).
+3. A tabela **`purchases`** recebe **2 registros** novos (`source='v2'`), um por linha, cada um com seu `correlation_id`.
+4. **Backward-compat:** o teste single da **12.1** (`{matchId,category,userId,quantity}`) **continua** retornando `202` com `correlationId` (singular) presente.
+
+**Teste pelo app (browser):** abra `https://<seu-frontend>.azurewebsites.net`, faça login, **adicione 2+ jogos ao carrinho** e finalize a compra. Você verá o **protocolo (`orderId`)**, a tela de recibo e o **polling** de status até a confirmação de todas as linhas.
+
+**Rastrear o pedido no App Insights (Logs / KQL):** todas as linhas do mesmo carrinho compartilham o `orderId` no escopo de log:
+
+```kusto
+// Todas as linhas de um pedido (carrinho) pelo orderId
+union traces, requests, dependencies
+| where customDimensions.OrderId == "<orderId-da-resposta>"
+| order by timestamp asc
+```
+
+> 🔎 **orderId vs correlationId:** o `orderId` agrupa o **pedido** (carrinho inteiro); cada `correlationId` rastreia **uma linha** do pedido. **Não há** tabela/coluna `order_id` no banco — o `orderId` vive na mensagem e nos logs (rastreabilidade), por design (sem migration).
 
 ---
 
